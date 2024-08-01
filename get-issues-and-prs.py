@@ -20,7 +20,7 @@ DEFAULT_REPOS = [
     'ADMerlin', 'ADMMPAD', 'ADCameralink', 'ADTimePix', 'firewireDCAM',
     'ADBinaries', 'ffmpegViewer', 'ADExample'
 ]
-DEFAULT_MAX_DAYS_OLD = 30
+DEFAULT_MAX_DAYS_OLD = 31
 
 
 def parse_args():
