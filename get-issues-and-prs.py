@@ -4,6 +4,7 @@ import json
 import subprocess
 
 from datetime import datetime, timedelta
+from operator import itemgetter
 
 DEFAULT_OWNER = 'areaDetector'
 DEFAULT_SKIP_REPOS = [
@@ -15,6 +16,7 @@ DEFAULT_FIRST_REPOS = [
     'ADSupport',
 ]
 DEFAULT_MAX_DAYS_OLD = 31
+DEFAULT_OLDEST_ITEMS = 7
 
 
 def parse_args():
@@ -25,6 +27,7 @@ def parse_args():
     parser.add_argument('--first-repos', nargs='+', default=DEFAULT_FIRST_REPOS)
     parser.add_argument('--no-skip-archived', action='store_false', dest='skip_archived')
     parser.add_argument('--days', type=int, default=DEFAULT_MAX_DAYS_OLD)
+    parser.add_argument('--oldest-items', type=int, default=DEFAULT_OLDEST_ITEMS, help='amount of stale issues and PRs to list')
     return parser.parse_args()
 
 
@@ -63,21 +66,29 @@ def sort_repos(repos, first_repos):
 
 
 def get_issues(project):
-    output = subprocess.check_output(['gh', 'issue', 'list', '--json',
-                                      'title,url,updatedAt', '--repo',
-                                      project])
+    output = subprocess.check_output(['gh', 'issue', 'list', '--limit', '1000',
+                                      '--json', 'title,url,updatedAt',
+                                      '--repo', project])
     return json.loads(output)
 
 
 def get_prs(project):
-    output = subprocess.check_output(['gh', 'pr', 'list', '--json',
-                                      'title,url,updatedAt', '--repo',
-                                      project])
+    output = subprocess.check_output(['gh', 'pr', 'list', '--limit', '1000',
+                                      '--json', 'title,url,updatedAt',
+                                      '--repo', project])
     return json.loads(output)
 
 
 def print_item(item):
     print(f'{" "*8}- [ ] [{item["title"]}]({item["url"]})')
+
+
+def print_oldest(items, heading, nelements):
+    print(f'    - Stale {heading}:')
+    # sorting dates alphabetically works just as well as converting them
+    items.sort(key=itemgetter('updatedAt'))
+    for item in items[:nelements]:
+        print_item(item)
 
 
 def main():
@@ -89,13 +100,17 @@ def main():
 
     repos = sort_repos(repos, args.first_repos)
 
+    all_issues = []
+    all_prs = []
     for repo in repos:
         if repo in args.skip_repos:
             continue
         project = f'{args.owner}/{repo}'
         issues = get_issues(project)
+        all_issues += issues
         issues = filter_old(issues, args.days)
         prs = get_prs(project)
+        all_prs += prs
         prs = filter_old(prs, args.days)
         if not issues and not prs:
             continue
@@ -110,6 +125,10 @@ def main():
             print('    - PRs:')
             for pr in prs:
                 print_item(pr)
+
+    print('- Stale Items:')
+    print_oldest(all_issues, 'Issues', args.oldest_items)
+    print_oldest(all_prs, 'PRs', args.oldest_items)
 
 
 if __name__ == '__main__':
