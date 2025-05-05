@@ -76,6 +76,10 @@ def get_prs(project):
     return json.loads(output)
 
 
+def print_item(item):
+    print(f'{" "*8}- [ ] [{item["title"]}]({item["url"]})')
+
+
 def main():
     args = parse_args()
     if args.repos is None:
@@ -100,13 +104,12 @@ def main():
         if issues:
             print('    - Issues:')
             for issue in issues:
-                print('        - [ ] [%s](%s)' % (issue['title'],
-                                                  issue['url']))
+                print_item(issue)
 
         if prs:
             print('    - PRs:')
             for pr in prs:
-                print('        - [ ] [%s](%s)' % (pr['title'], pr['url']))
+                print_item(pr)
 
 
 if __name__ == '__main__':
