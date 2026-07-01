@@ -9,6 +9,7 @@ from operator import itemgetter
 DEFAULT_OWNER = 'areaDetector'
 DEFAULT_SKIP_REPOS = [
     'ADKinetix', # has disabled issues
+    'ADXSPD', # has disabled issues
 ]
 DEFAULT_FIRST_REPOS = [
     'areaDetector',
